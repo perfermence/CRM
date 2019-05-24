@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CRM客户管理系统</title>
+    <style>
+        html,body{
+            -webkit-user-select:none;
+        }
+        .box{
+            width: 500px;
+            border:2px solid green;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        input {
+            width: 400px;
+            height: 30px;
+        }
+        #userAge,#userName{
+            width:200px;
+        }
+        .submit{
+            width: 150px;
+            margin:10px auto;
+            background:green;
+            text-align: center;
+            height: 30px;
+            line-height: 30px;
+            cursor: pointer;
+        }
+        .submit:hover{
+            background: #f10215;
+        }
+        span{
+            font-size:14px;
+            display: none;
+            opacity: 1;
+            margin-left: 50px;
+            color:red;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <p>
+            <label for="userName">姓名:</label>
+                <input type="text" id="userName">
+            <span class="message1">请输入用户名</span>
+        </p>
+        <p>
+            <label for="userAge">年龄:</label>
+            <input type="text" id="userAge">
+            <span class="message2">请输入您的年龄</span>
+
+        </p>
+        <p>
+            <label for="userPhone">电话:</label>
+            <input type="text" id="userPhone">
+            <span class="message3">请留下您的电话</span>
+        </p>
+        <p>
+            <label for="userAddress">地址:</label>
+            <input type="text" id="userAddress">
+            <span class="message4">请输入您的地址</span>
+        </p>
+        <div class="submit">提交</div>
+    </div>
+</body>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script>
+    //增加客户信息
+    let addRender=function () {
+        let $userName=$('#userName'),
+            $userAge=$('#userAge'),
+            $userPhone=$('#userPhone'),
+            $useAddress=$('#userAddress');
+        let $submit=$('.submit');
+
+        let $message1=$('.message1')[0],
+            $message2=$('.message2')[0],
+            $message3=$('.message3')[0],
+            $message4=$('.message4')[0];
+        let add=function () {
+            let userName=$userName.val(),
+                userAge=$userAge.val(),
+                userPhone=$userPhone.val(),
+                userAddress=$useAddress.val();
+                if (userName&&userAge&&userPhone&&userAddress){
+
+                    $.ajax({
+                        url: '/addInfo',
+                        method: 'POST',
+                        dataType: 'json',
+                        data: JSON.stringify({//请求主体中的内容必须是JSON格式的字符串
+                            userName: userName,
+                            userAge: userAge,
+                            userPhone: userPhone,
+                            userAddress: userAddress
+                        }),
+                        success: function (result) {
+                            if (result["code"] == 0) {
+                                alert('提交成功');
+                                //成功后跳转回首页
+                                window.location.href="index.html";
+                            }else{
+                                alert(result.msg);
+                            }
+
+                        }
+                    })
+                }
+                //做表单验证（把所有功能做完再来做这个）
+                if (!userName){
+                    $message1.style.display='block';
+                    return;
+                }else if (!userAge){
+                    $message1.style.display='none';
+                    $message2.style.display='block';
+                    return;
+                }else if (!userPhone){
+                    $message2.style.display='none';
+                    $message3.style.display='block';
+                    return;
+                }else if(!userAddress){
+                    $message3.style.display='none';
+                    $message4.style.display='block';
+                    return;
+                }
+            };
+        return{
+            init:function () {
+                $submit.on('click', add);
+            }
+        }
+    }();
+
+    //修改客户信息
+    let updateRender=function () {
+        //获取ID
+        let search=window.location.search;
+        let reg=/\?(\w+)=(\d+)$/g;
+        let obj={};
+        search.replace(reg,function (...arg) {
+            let[,key,value]=arg;
+            obj[key]=value;
+
+        });
+        //获取元素
+        let $userName=$('#userName'),
+            $userAge=$('#userAge'),
+            $userPhone=$('#userPhone'),
+            $userAddress=$('#userAddress');
+        let $submit=$('.submit');
+
+        //根据ID获取客户信息,即获取单个客户信息，绑定到表格中，
+        let bindHTML=function(result){
+            let data=result["data"];
+            let{userName,userAge,userPhone,userAddress}=data;
+            $userName.val(userName);
+            $userAge.val(userAge);
+            $userPhone.val(userPhone);
+            $userAddress.val(userAddress);
+
+        };
+        //修改信息并提交
+        let update=function () {
+          //验证信息是否更改先不做
+            //获取表格中的信息，发送给/updateInfo，再跳回首页
+            let userName=$userName.val(),
+                userAge=$userAge.val(),
+                userPhone=$userPhone.val(),
+                userAddress=$userAddress.val();
+            $.ajax({
+                url:'/updateInfo',
+                method:'POST',
+                dataType:'json',
+                data:JSON.stringify({//请求主体中的内容必须是JSON格式的字符串
+                    id:obj.id,
+                    userName: userName,
+                    userAge: userAge,
+                    userPhone: userPhone,
+                    userAddress: userAddress
+                }),
+                success:function (result) {
+                    if (result.code==0){
+                        alert(result.msg);
+                        window.location.href='index.html';
+                    }
+                    alert(result.msg);
+                }
+            })
+        };
+        return {
+            init:function () {
+                //获取单个客户信息
+                $.ajax({
+                    url:`/getInfo?id=${obj["id"]}`,
+                    method:'POST',
+                    dataType:'json',
+                    success:bindHTML
+                });
+                //修改信息
+                $submit.on('click',update);
+            }
+        }
+    }();
+    let search=window.location.search;
+    let reg=/\?(\w+)=(\d+)$/g;
+    let obj={};
+    // search.replace(reg,function (...arg) {
+    //      let[,key,value]=arg;
+    //     console.log(key, value);
+    //     obj[key]=value;
+    //     console.log(obj);
+    //
+    // });
+    if (reg.test(search)){
+        updateRender.init();
+    } else{
+        addRender.init();
+    }
+</script>
+</html>

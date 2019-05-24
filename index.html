@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CRM客户管理系统</title>
+    <!--<link rel="stylesheet" href="css/index.css" type="text/css" charset="utf-8">-->
+    <style>
+        *{
+            margin:0;
+            padding: 0;
+        }
+        html,body{
+            font-family: "Adobe 宋体 Std L", serif;
+            font-size: 16px;
+        }
+        ul,li{
+            list-style: none;
+        }
+        a{
+            text-decoration: none;
+        }
+        .box{
+            margin:50px auto;
+            width: 800px;
+            border: 2px solid green;
+            overflow: hidden;
+            padding:20px;
+        }
+        .box .link {
+            display: block;
+            color: #0b2e13;
+            font-size: 18px;
+            margin:10px 0;
+        }
+        .box .link:hover{
+            color:#1c88d3;
+        }
+        .box h2{
+            width:800px;
+            height: 40px;
+            background: #1c7430;
+            color:#FFFFFF;
+            font-size: 16px;
+            line-height: 40px;
+        }
+        .box h2 span,.item li span{
+            float: left;
+            text-align: center;
+        }
+        .w100{
+            width: 100px;
+        }
+        .w200{
+            width: 200px;
+        }
+        .item li{
+            margin:10px 0;
+            height: 40px;
+            line-height: 40px;
+        }
+        .item li:nth-child(2n){
+            background:lightgray ;
+        }
+        .item li:hover{
+            background:chocolate ;
+        }
+        .control a:hover{
+            color: blue;
+        }
+        .page {
+            height: 50px;
+            float: right;
+            text-align: center;
+            margin-top:30px;
+        }
+        .page ul,.page ul li,.page span{
+           margin:0 5px;
+            float: left;
+            height: 22px;
+            border: 2px solid green;
+            cursor:pointer;
+        }
+        .page span{
+            width: 50px;
+        }
+        .page ul{
+            border:none;
+        }
+        .page ul li{
+            width:25px;
+        }
+        .current{
+            background: #1c7430;
+            color:#FFF;
+        }
+    </style>
+</head>
+<body>
+<div class="box">
+    <a href="add.html" class="link">增加新客户</a>
+    <h2>
+        <span class="w100">编号</span>
+        <span class="w100">姓名</span>
+        <span class="w100">年龄</span>
+        <span class="w100">电话</span>
+        <span class="w200">地址</span>
+        <span class="w200">操作</span>
+    </h2>
+    <ul class="item">
+        <!--<li>-->
+            <!--<span class="w100">1</span>-->
+            <!--<span class="w100">宋丹</span>-->
+            <!--<span class="w100">22</span>-->
+            <!--<span class="w100">15295515269</span>-->
+            <!--<span class="w200">江苏省南京市邮电大学</span>-->
+            <!--<span class="w200 control">-->
+                <!--<a href="">修改&nbsp;</a>-->
+                <!--<a href="">删除</a>-->
+            <!--</span>-->
+        <!--</li>-->
+    </ul>
+
+    <div class="page">
+            <span class="first">first</span>
+            <span class="prev">prev</span>
+            <ul class="pageContent">
+                <!--<li>1</li>-->
+                <!--<li>2</li>-->
+                <!--<li>3</li>-->
+                <!--<li>4</li>-->
+            </ul>
+            <span class="next">next</span>
+            <span class="last">last</span>
+    </div>
+</div>
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script>
+        //获取所有用户信息
+        let getInfoRender=function(){
+            let $ulList=$('.item');
+            let $pageContent=$('.pageContent');
+            let $page=$('.page');
+            let n=1,
+                total=0;
+            //绑定用户信息
+            let bindHTML=function(data){
+                let str=``;
+                let str1=``;
+                total=data.total;
+                data["data"].forEach(item=>{
+                    let{id,userName,userAge,userPhone,userAddress}=item;
+                    str+=`<li>
+            <span class="w100">${id}</span>
+            <span class="w100">${userName}</span>
+            <span class="w100">${userAge}</span>
+            <span class="w100">${userPhone}</span>
+            <span class="w200">${userAddress}</span>
+            <span class="w200 control">
+                <a href="add.html?id=${id}">修改&nbsp;</a>
+                <a href="javascript:;" id=${id} class="remove" >删除</a>
+            </span>
+        </li>`;
+                });
+            $ulList.html(str);
+            for (let i=1;i<=total;i++) {
+                if (i==n){
+                    str1+=`<li class="current">${i}</li>`;
+                    continue;
+                }
+                str1+=`<li>${i}</li>`
+            }
+            $pageContent.html(str1);
+
+            };
+
+            //发送AJAX请求
+            let sendAjax=function(){
+                $.ajax({
+                    url:`./getList?n=${n}`,
+                    method:'GET',
+                    dataType:'json',
+                    success:function(result){
+                        if (result.code==0){
+                            bindHTML(result);
+                        }
+                    },
+                    err:function () {
+                        alert('获取数据失败');
+                    }
+                });
+            };
+
+            //用事件委托实现分页技术
+            let paging=function(ev){
+               ev=ev||window.event;
+               let tar=ev.target||ev.srcElement,
+                   tarTag=tar.tagName.toUpperCase(),
+                   tarInn=tar.innerHTML;
+               if (tarTag==='SPAN'){
+                   if (tarInn==='first'){
+                       if (n===1){
+                           return;
+                       }
+                       n=1;
+                   }
+                   if (tarInn==='last'){
+                       if (n===total){
+                           return;
+                       }
+                       n=total;
+                   }
+                   if (tarInn==='prev'){
+                       if (n===1){
+                           return;
+                       }
+                       n--;
+                   }
+                   if (tarInn==='next'){
+                       if (n===total){
+                           return;
+                       }
+                       n++;
+                   }
+               }
+               if (tarTag==='LI'){
+                   n=parseFloat(tarInn);
+               }
+               sendAjax();
+            };
+
+            let init=function () {
+                sendAjax();
+                $page[0].onclick=paging;
+            };
+            return{
+                init,
+            }
+        }();
+        getInfoRender.init();
+        //删除指定客户信息
+        let removeRender=function () {
+          //动态绑定的数据不可以获取，所以可以基于事件委托来做
+            let $item=$('.item');
+            let removeInfo=function(ev){
+                console.log(ev.target);
+                if (ev.target.className==='remove') {
+                    console.log(1);
+                    let id=ev.target.getAttribute('id');
+                    $.ajax({
+                        url:`/removeInfo?id=${id}`,
+                        method:'GET',
+                        dataType:'json',
+                        success:function (result) {
+                            if (result.code==0){
+                                alert(result.msg);
+                                window.location.href='index.html';//自己刷新，不用删除元素就看出效果
+                            } else{
+                                alert(result.msg);
+                            }
+                        }
+                    })
+                }
+            };
+            return{
+                init(){
+                    $item.on('click',removeInfo);
+                }
+            };
+
+        }();
+        removeRender.init();
+
+
+
+
+</script>
+</body>
+</html>
